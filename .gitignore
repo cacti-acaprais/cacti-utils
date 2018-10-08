@@ -3,3 +3,11 @@
 ################################################################################
 
 /.vs/Cacti.Utils/v15
+/.vs/.gitlab
+/.vs/VSWorkspaceState.json
+/.vs/slnx.sqlite
+/.vs
+/Cacti.Utils/bin/Debug/netstandard2.0
+/Cacti.Utils/obj
+/Cacti.Utils.UnitTests/bin/Debug/netcoreapp2.1
+/Cacti.Utils.UnitTests/obj

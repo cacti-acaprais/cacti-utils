@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2041
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cacti.Utils", "Cacti.Utils\Cacti.Utils.csproj", "{D79FDFA4-5D26-4BF2-88CE-B4B5FF3242E7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cacti.Utils.UnitTests", "Cacti.Utils.UnitTests\Cacti.Utils.UnitTests.csproj", "{DCAA8CF5-A6E9-4C58-8B29-A88F4300C49B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D79FDFA4-5D26-4BF2-88CE-B4B5FF3242E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D79FDFA4-5D26-4BF2-88CE-B4B5FF3242E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D79FDFA4-5D26-4BF2-88CE-B4B5FF3242E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D79FDFA4-5D26-4BF2-88CE-B4B5FF3242E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCAA8CF5-A6E9-4C58-8B29-A88F4300C49B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCAA8CF5-A6E9-4C58-8B29-A88F4300C49B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCAA8CF5-A6E9-4C58-8B29-A88F4300C49B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCAA8CF5-A6E9-4C58-8B29-A88F4300C49B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3297CA44-DDC2-4C93-84F8-6801077E5C6E}
+	EndGlobalSection
+EndGlobal
