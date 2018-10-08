@@ -112,5 +112,38 @@ namespace Cacti.Utils.UnitTests
 
             Assert.AreEqual(retryTimes, 0);
         }
+
+        [TestMethod]
+        public async Task ProcessJob()
+        {
+            ProcessResult processResult = new ProcessResult();
+
+            IJob job = new Job(() => 
+            {
+                processResult.Step1 = nameof(processResult.Step1);
+            })
+            .Then(new Job(() =>
+            {
+                processResult.Step2 = nameof(processResult.Step2);
+            }))
+            .Then(new Job(() =>
+            {
+                processResult.Step3 = nameof(processResult.Step3);
+            }));
+
+            await job.Execute(CancellationToken.None);
+
+            Assert.AreEqual(processResult.Step1, nameof(processResult.Step1));
+            Assert.AreEqual(processResult.Step2, nameof(processResult.Step2));
+            Assert.AreEqual(processResult.Step3, nameof(processResult.Step3));
+        }
+
+        public class ProcessResult
+        {
+            public string Step1 { get; set; }
+            public string Step2 { get; set; }
+            public string Step3 { get; set; }
+        }
     }
 }
+
