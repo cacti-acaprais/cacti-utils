@@ -35,22 +35,25 @@ namespace Cacti.Utils.UnitTests
         [TestMethod]
         public async Task CancelJob()
         {
-            bool done = false;
             IJob job = new Job(() => { })
                 .Delay(TimeSpan.FromMilliseconds(100))
-                .Then(new Job(() => { done = true; }));
+                .Then(new Job(() => { }));
 
             CancellationTokenSource tokenSource = new CancellationTokenSource();
             tokenSource.CancelAfter(TimeSpan.FromMilliseconds(50));
+
+            bool cancelled = false;
 
             try
             {
                 await job.Execute(tokenSource.Token);
             }
             catch(TaskCanceledException)
-            { }
+            {
+                cancelled = true;
+            }
             
-            Assert.AreNotEqual(done, true);
+            Assert.AreEqual(true, cancelled);
         }
 
         [TestMethod]
