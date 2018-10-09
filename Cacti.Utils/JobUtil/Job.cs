@@ -38,8 +38,10 @@ namespace Cacti.Utils.JobUtil
 
         public async Task Execute(CancellationToken token)
         {
-            if (!token.IsCancellationRequested)
-                await action(token);
+            if (token.IsCancellationRequested)
+                throw new TaskCanceledException();
+
+            await action(token);
         }
     }
 }
