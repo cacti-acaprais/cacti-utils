@@ -1,3 +1,4 @@
+using Cacti.Utils.JobUtil;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Threading;
@@ -39,11 +40,16 @@ namespace Cacti.Utils.UnitTests
                 .Delay(TimeSpan.FromMilliseconds(100))
                 .Then(new Job(() => { done = true; }));
 
-            using (job.Run())
-            {
-                await Task.Delay(TimeSpan.FromMilliseconds(50));
-            }
+            CancellationTokenSource tokenSource = new CancellationTokenSource();
+            tokenSource.CancelAfter(TimeSpan.FromMilliseconds(50));
 
+            try
+            {
+                await job.Execute(tokenSource.Token);
+            }
+            catch(TaskCanceledException)
+            { }
+            
             Assert.AreNotEqual(done, true);
         }
 
@@ -54,11 +60,16 @@ namespace Cacti.Utils.UnitTests
             IJob job = new Job(() => repeatTimes++)
                 .Repeat(TimeSpan.FromMilliseconds(10));
 
-            using (job.Run())
-            {
-                await Task.Delay(TimeSpan.FromMilliseconds(50));
-            }
+            CancellationTokenSource tokenSource = new CancellationTokenSource();
+            tokenSource.CancelAfter(TimeSpan.FromMilliseconds(50));
 
+            try
+            {
+                await job.Execute(tokenSource.Token);
+            }
+            catch(TaskCanceledException)
+            { }
+            
             Assert.AreEqual(repeatTimes, 5);
         }
 
@@ -93,23 +104,55 @@ namespace Cacti.Utils.UnitTests
         }
 
         [TestMethod]
-        public async Task RunAndRetry()
+        public async Task ProcessJob()
         {
-            int retryTimes = 5;
-            IJob job = new Job(() => throw new Exception());
-            IJob retryAwaiter = new Job(() => { })
-                .Repeat(TimeSpan.Zero, () => retryTimes > 0);
+            LoginModel model = new LoginModel();
+            await GetUserCrendentials(model)
+                .Then(AuthenticateUser(model)
+                    //handle authentication exception.
+                    .Handle<ArgumentOutOfRangeException>())
+                //Repeat get crendential and authentication 3 times if not authenticated
+                .Times(3, () => model.User == null)
+                .Execute(CancellationToken.None);
 
-            using (job.Run(exception =>
-            {
-                retryTimes--;
-                return retryTimes > 0;
-            }))
-            {
-                await retryAwaiter.Execute(CancellationToken.None);
-            }
+            Assert.IsNotNull(model.User);
+        }
 
-            Assert.AreEqual(retryTimes, 0);
+        private IJob GetUserCrendentials(LoginModel model)
+        {
+            if (model == null) throw new ArgumentNullException(nameof(model));
+
+            //For test purposes.
+            int retry = 2;
+
+            return new Job(() =>
+            {
+                retry--;
+                model.Login = retry == 0 ? nameof(model.Login) : string.Empty;
+                model.Password = nameof(model.Password);
+            });
+        }
+
+        private IJob AuthenticateUser(LoginModel model)
+        {
+            if (model == null) throw new ArgumentNullException(nameof(model));
+
+            return new Job(() =>
+            {
+                if (model.Login != nameof(model.Login)
+                || model.Password != nameof(model.Password))
+                    throw new ArgumentOutOfRangeException();
+                
+                model.User = new object();
+            });
+        }
+
+        private class LoginModel
+        {
+            public string Login { get; set; }
+            public string Password { get; set; }
+            public object User { get; set; }
         }
     }
 }
+

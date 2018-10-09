@@ -4,7 +4,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Cacti.Utils
+namespace Cacti.Utils.JobUtil
 {
     public class Job : IJob
     {
@@ -38,8 +38,10 @@ namespace Cacti.Utils
 
         public async Task Execute(CancellationToken token)
         {
-            if (!token.IsCancellationRequested)
-                await action(token);
+            if (token.IsCancellationRequested)
+                throw new TaskCanceledException();
+
+            await action(token);
         }
     }
 }
