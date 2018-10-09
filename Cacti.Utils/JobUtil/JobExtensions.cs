@@ -10,13 +10,11 @@ namespace Cacti.Utils.JobUtil
     public static class JobExtensions
     {
         public static IJob Delay(this IJob job, TimeSpan delay)
-        {
-            return new Job(async (token) =>
+            => new Job(async (token) =>
             {
                 await Task.Delay(delay, token);
                 await job.Execute(token);
             });
-        }
 
         public static IJob Times(this IJob job, int times, Func<bool> until)
             => Repeat(job, TimeSpan.Zero, () => times-- > 0 && until());
@@ -31,8 +29,7 @@ namespace Cacti.Utils.JobUtil
             => Repeat(job, delay, () => true);
 
         public static IJob Repeat(this IJob job, TimeSpan delay, Func<bool> until)
-        {
-            return new Job(async (token) =>
+            => new Job(async (token) =>
             {
                 while (!token.IsCancellationRequested && until())
                 {
@@ -40,18 +37,17 @@ namespace Cacti.Utils.JobUtil
                     await Task.Delay(delay, token);
                 }
             });
-        }
 
         public static IJob Then(this IJob job, IJob nextJob)
-        {
-            return new Job(async (token) =>
+            => new Job(async (token) =>
             {
                 await job.Execute(token);
 
-                if (!token.IsCancellationRequested)
-                    await nextJob.Execute(token);
+                if (token.IsCancellationRequested)
+                    throw new TaskCanceledException();
+
+                await nextJob.Execute(token);
             });
-        }
 
         public static IJob Handle<T>(this IJob job)
             where T : Exception
@@ -59,8 +55,7 @@ namespace Cacti.Utils.JobUtil
 
         public static IJob Handle<T>(this IJob job, Action<T> handle)
             where T : Exception
-        {
-            return new Job(async (token) =>
+            => new Job(async (token) =>
             {
                 try
                 {
@@ -71,7 +66,6 @@ namespace Cacti.Utils.JobUtil
                     handle(exception);
                 }
             });
-        }
 
         public static IJob Aggregate(this IEnumerable<IJob> jobs)
         {
