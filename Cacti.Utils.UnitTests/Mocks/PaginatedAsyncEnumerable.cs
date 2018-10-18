@@ -13,6 +13,7 @@ namespace Cacti.Utils.UnitTests.Mocks
         private readonly PaginatedContext<T> paginatedContext;
         private readonly int pageSize;
         private readonly List<T> values = new List<T>();
+        private bool complete = false;
 
         public PaginatedAsyncEnumerable(int pageSize, PaginatedContext<T> paginatedContext)
         {
@@ -40,21 +41,18 @@ namespace Cacti.Utils.UnitTests.Mocks
             return Task.FromResult(values.Count > position);
         }
 
-        private int GetPage(int position)
-            => position / pageSize;
-
-        private int GetNextPage(int count)
-            => count / pageSize + 1;
-
         private void CachePagesTo(int position)
         {
-            while (values.Count <= position)
+            while (values.Count <= position && !complete)
             {
-                IEnumerable<T> page = paginatedContext.GetPage(GetNextPage(values.Count), pageSize);
-                if (page.Count() < 1)
-                    break;
-
+                IEnumerable<T> page = paginatedContext.GetPage((values.Count / pageSize) + 1, pageSize);
+                
                 values.AddRange(page);
+
+                if (page.Count() < pageSize)
+                {
+                    complete = true;
+                }
             }
         }
 
