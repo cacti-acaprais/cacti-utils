@@ -1,2 +1,2 @@
 # cacti-utils
-utilities class from Cacti
+Poc of utilities class from Cacti
