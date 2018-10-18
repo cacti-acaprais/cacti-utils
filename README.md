@@ -1,2 +1,5 @@
 # cacti-utils
-utilities class from Cacti
+Poc of utilities class about:
+- IAsyncEnumerable
+- IJob
+- IObservable
