@@ -21,7 +21,7 @@ namespace Cacti.Utils.ObservableUtil
         public IDisposable Subscribe(IObserver<T> observer)
         {
             long id = idProvider.Get();
-            //TyrAdd is neveer false, cause id is guarantee to be different each calls.
+            //TyrAdd is never false, cause id is guarantee to be different each calls.
             observers.TryAdd(id, observer);
 
             return new Unsubscriber(observers, id);
