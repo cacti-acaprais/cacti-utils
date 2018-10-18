@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Cacti.Utils.ObservableUtil;
+using System.Diagnostics;
 
 namespace Cacti.Utils.UnitTests
 {
@@ -18,7 +19,7 @@ namespace Cacti.Utils.UnitTests
         {
             const int TOTAL = 10;
 
-            PaginatedContext<string> paginatedContext = new PaginatedContext<string>(TOTAL, (index) => $"index: {index}");
+            PaginatedContext<string> paginatedContext = new PaginatedContext<string>(TOTAL, (index) => $"index: {index}", TimeSpan.FromMilliseconds(200));
             PaginatedAsyncEnumerable<string> paginatedAsync = new PaginatedAsyncEnumerable<string>(3, paginatedContext);
 
             List<string> values = new List<string>();
@@ -33,7 +34,7 @@ namespace Cacti.Utils.UnitTests
             const int TOTAL = 10;
             const string MAPPING_VALUE = "map";
 
-            PaginatedContext<string> paginatedContext = new PaginatedContext<string>(TOTAL, (index) => $"index: {index}");
+            PaginatedContext<string> paginatedContext = new PaginatedContext<string>(TOTAL, (index) => $"index: {index}", TimeSpan.FromMilliseconds(200));
             PaginatedAsyncEnumerable<string> paginatedAsync = new PaginatedAsyncEnumerable<string>(3, paginatedContext);
 
             List<string> mappedValues = await paginatedAsync
@@ -48,7 +49,7 @@ namespace Cacti.Utils.UnitTests
         {
             const int TOTAL = 10;
 
-            PaginatedContext<int> paginatedContext = new PaginatedContext<int>(TOTAL, (index) => index);
+            PaginatedContext<int> paginatedContext = new PaginatedContext<int>(TOTAL, (index) => index, TimeSpan.FromMilliseconds(200));
             PaginatedAsyncEnumerable<int> paginatedAsync = new PaginatedAsyncEnumerable<int>(3, paginatedContext);
 
             List<int> filteredValues = await paginatedAsync
@@ -63,16 +64,56 @@ namespace Cacti.Utils.UnitTests
         {
             const int TOTAL = 10;
 
-            PaginatedContext<int> paginatedContext = new PaginatedContext<int>(TOTAL, (index) => index);
+            PaginatedContext<int> paginatedContext = new PaginatedContext<int>(TOTAL, (index) => index, TimeSpan.FromMilliseconds(200));
             PaginatedAsyncEnumerable<int> paginatedAsync = new PaginatedAsyncEnumerable<int>(3, paginatedContext);
 
             List<string> readValues = new List<string>();
 
-            await paginatedAsync
+            CancellationTokenSource tokenSource = new CancellationTokenSource();
+
+            IObserver<string> observer = new Observer<string>(
+                onNext:(value) => readValues.Add(value),
+                onException: exception => { throw exception; }, 
+                onCompleted: () => tokenSource.Cancel());
+
+            IObservable<string> observable = paginatedAsync
                 .Where(value => value % 2 > 0)
-                .Observe(new Observer<int>((value) => readValues.Add($"read : {value}")), CancellationToken.None);
+                .Select(value => $"read : {value}")
+                .ToObservable();
+            
+            using (observable.Subscribe(observer))
+            {
+                try
+                {
+                    //Wait cancel the wait on complete.
+                    await Task.Delay(TimeSpan.FromSeconds(10), tokenSource.Token);
+                }
+                catch(TaskCanceledException)
+                { }
+            }
 
             Assert.IsTrue(readValues.Count == 5);
+        }
+
+        [TestMethod]
+        public async Task DelayedAsyncEnumerable()
+        {
+            const int TOTAL = 10;
+
+            PaginatedContext<int> paginatedContext = new PaginatedContext<int>(TOTAL, (index) => index, TimeSpan.FromMilliseconds(200));
+            PaginatedAsyncEnumerable<int> paginatedAsync = new PaginatedAsyncEnumerable<int>(3, paginatedContext);
+
+            Stopwatch stop = Stopwatch.StartNew();
+
+            //We add a rythm of 1 second for each result
+            List<int> filteredValues = await paginatedAsync
+                .Where(value => value % 2 > 0)
+                .Delay(TimeSpan.FromSeconds(0.5))
+                .ToListAsync(CancellationToken.None);
+
+            stop.Stop();
+
+            Assert.IsTrue(stop.Elapsed >= TimeSpan.FromSeconds(2.5));
         }
     }
 }
