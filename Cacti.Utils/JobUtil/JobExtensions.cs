@@ -9,12 +9,13 @@ namespace Cacti.Utils.JobUtil
 {
     public static class JobExtensions
     {
+
         public static IJob Delay(this IJob job, TimeSpan delay)
             => new Job(async (token) =>
             {
                 await Task.Delay(delay, token);
                 await job.Execute(token);
-            });
+            }, job.Dispose);
 
         public static IJob Times(this IJob job, int times, Func<bool> until)
             => Repeat(job, TimeSpan.Zero, () => times-- > 0 && until());
@@ -36,7 +37,7 @@ namespace Cacti.Utils.JobUtil
                     await job.Execute(token);
                     await Task.Delay(delay, token);
                 }
-            });
+            }, job.Dispose);
 
         public static IJob Then(this IJob job, IJob nextJob)
             => new Job(async (token) =>
@@ -47,6 +48,10 @@ namespace Cacti.Utils.JobUtil
                     throw new TaskCanceledException();
 
                 await nextJob.Execute(token);
+            }, () =>
+            {
+                job.Dispose();
+                nextJob.Dispose();
             });
 
         public static IJob Handle<T>(this IJob job)
@@ -65,7 +70,7 @@ namespace Cacti.Utils.JobUtil
                 {
                     handle(exception);
                 }
-            });
+            }, job.Dispose);
 
         public static IJob Aggregate(this IEnumerable<IJob> jobs)
         {
@@ -78,6 +83,10 @@ namespace Cacti.Utils.JobUtil
                     .ToArray();
 
                 await Task.WhenAll(tasks);
+            }, () =>
+            {
+                foreach (IJob job in jobs)
+                    job.Dispose();
             });
         }
     }

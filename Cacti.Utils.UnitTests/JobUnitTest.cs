@@ -64,7 +64,7 @@ namespace Cacti.Utils.UnitTests
                 .Repeat(TimeSpan.FromMilliseconds(10));
 
             CancellationTokenSource tokenSource = new CancellationTokenSource();
-            tokenSource.CancelAfter(TimeSpan.FromMilliseconds(50));
+            tokenSource.CancelAfter(TimeSpan.FromMilliseconds(55));
 
             try
             {
