@@ -20,9 +20,12 @@ namespace Cacti.Utils.UnitTests
             };
 
             List<string> readValues = new List<string>();
+            IObserver<string> observer = new Observer<string>((value) => readValues.Add(value));
+            IObservable<string> observable = values.ToObservable();
 
-            values.Observe(new Observer<string>((value) => readValues.Add(value)));
-
+            //the processing is synchronous, so there's no need to unsubscribe.
+            observable.Subscribe(observer);
+            
             Assert.IsTrue(values.All(value => readValues.Contains(value)));
         }
     }

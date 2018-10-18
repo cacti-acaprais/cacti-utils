@@ -23,29 +23,29 @@ namespace Cacti.Utils.UnitTests.Mocks
             this.paginatedContext = paginatedContext ?? throw new ArgumentNullException(nameof(paginatedContext));
         }
 
-        protected override Task<T> GetValueAt(int position, CancellationToken token)
+        protected override async Task<T> GetValueAt(int position, CancellationToken token)
         {
             if (position < 0) throw new ArgumentOutOfRangeException(nameof(position));
             if (token == null) throw new ArgumentNullException(nameof(token));
-            CachePagesTo(position);
+            await CachePagesTo(position, token);
 
-            return Task.FromResult(values[position]);
+            return values[position];
         }
 
-        protected override Task<bool> IsValueAt(int position, CancellationToken token)
+        protected override async Task<bool> IsValueAt(int position, CancellationToken token)
         {
             if (position < 0) throw new ArgumentOutOfRangeException(nameof(position));
             if (token == null) throw new ArgumentNullException(nameof(token));
-            CachePagesTo(position);
+            await CachePagesTo(position, token);
 
-            return Task.FromResult(values.Count > position);
+            return values.Count > position;
         }
 
-        private void CachePagesTo(int position)
+        private async Task CachePagesTo(int position, CancellationToken token)
         {
             while (values.Count <= position && !complete)
             {
-                IEnumerable<T> page = paginatedContext.GetPage((values.Count / pageSize) + 1, pageSize);
+                IEnumerable<T> page = await paginatedContext.GetPage((values.Count / pageSize) + 1, pageSize, token);
                 
                 values.AddRange(page);
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +15,25 @@ namespace Cacti.Utils.AsyncUtil
             await asyncEnumerable.ForEach((value) => list.Add(value), token);
             return list;
         }
+
+        public static IAsyncEnumerable<T> Delay<T>(this IAsyncEnumerable<T> asyncEnumerable, TimeSpan minDelay)
+                => new CompositeAsyncEnumerable<T, T>(asyncEnumerable, value => value, async (token, next) =>
+                {
+                    Stopwatch stopwatch = Stopwatch.StartNew();
+                    bool hasNext = await next();
+                    stopwatch.Stop();
+
+                    if (hasNext)
+                    {
+                        TimeSpan delay = minDelay - stopwatch.Elapsed;
+                        delay = delay < TimeSpan.Zero
+                        ? TimeSpan.Zero
+                        : delay;
+
+                        await Task.Delay(delay, token);
+                    }
+                    return hasNext;
+                });
 
         public static IAsyncEnumerable<T> Where<T>(this IAsyncEnumerable<T> asyncEnumerable, Predicate<T> predicate)
             => new FilterAsyncEnumerable<T>(asyncEnumerable, predicate);
