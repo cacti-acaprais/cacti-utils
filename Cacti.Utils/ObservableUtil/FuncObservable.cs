@@ -1,4 +1,4 @@
-﻿using Cacti.Utils.AsyncUtil;
+﻿using Cacti.Utils.JobUtil;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,22 +7,21 @@ using System.Threading.Tasks;
 
 namespace Cacti.Utils.ObservableUtil
 {
-    public class AsyncEnumerableObservable<T> : IObservable<T>
+    public class FuncObservable<T> : IObservable<T>
     {
-        private readonly IAsyncEnumerable<T> enumerable;
+        private readonly Func<CancellationToken, Task<T>> onExecute;
 
-        public AsyncEnumerableObservable(IAsyncEnumerable<T> enumerable)
+        public FuncObservable(Func<CancellationToken, Task<T>> onExecute)
         {
-            this.enumerable = enumerable ?? throw new ArgumentNullException(nameof(enumerable));
+            this.onExecute = onExecute ?? throw new ArgumentNullException(nameof(onExecute));
         }
 
         public IDisposable Subscribe(IObserver<T> observer)
         {
             CancellationTokenSource tokenSource = new CancellationTokenSource();
-            
-            enumerable
-                .ForEach((value) => observer.OnNext(value), tokenSource.Token)
-                .ContinueWith((task) =>
+
+            onExecute(tokenSource.Token)
+                .ContinueWith((task) => 
                 {
                     if(task.IsFaulted)
                     {
@@ -30,15 +29,15 @@ namespace Cacti.Utils.ObservableUtil
                     }
                     observer.OnCompleted();
                 }, tokenSource.Token);
-            
-            return new Unsubscriber(tokenSource);
+
+            return new Unsubscribe(tokenSource);
         }
 
-        private class Unsubscriber : IDisposable
+        private class Unsubscribe : IDisposable
         {
             private readonly CancellationTokenSource tokenSource;
 
-            public Unsubscriber(CancellationTokenSource tokenSource)
+            public Unsubscribe(CancellationTokenSource tokenSource)
             {
                 this.tokenSource = tokenSource ?? throw new ArgumentNullException(nameof(tokenSource));
             }

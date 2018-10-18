@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace Cacti.Utils.ObservableUtil
 {
-    public class Observable<T> : IObservable<T>, IDisposable
+    public class Observable<T> : IObservable<T>
     {
         public Observable()
         { }
@@ -33,17 +33,14 @@ namespace Cacti.Utils.ObservableUtil
         public void Error(Exception exception)
             => OnEachObserver(observer => observer.OnCompleted());
 
+        public void Complete()
+            => OnEachObserver(observer => observer.OnCompleted());
+
         private void OnEachObserver(Action<IObserver<T>> action)
         {
             IObserver<T>[] observers = this.observers.Values.ToArray();
             foreach (IObserver<T> observer in observers)
                 action(observer);
-        }
-
-        public void Dispose()
-        {
-            OnEachObserver(observer => observer.OnCompleted());
-            observers.Clear();
         }
 
         private class Unsubscriber : IDisposable

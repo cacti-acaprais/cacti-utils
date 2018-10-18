@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Cacti.Utils.JobUtil
 {
-    public interface IJob
+    public interface IJob : IDisposable
     {
         Task Execute(CancellationToken token);
     }
