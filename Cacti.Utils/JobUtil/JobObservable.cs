@@ -46,10 +46,5 @@ namespace Cacti.Utils.JobUtil
                 observable.Error(exception);
             }
         }
-
-        public void Dispose()
-        {
-            observable.Complete();
-        }
     }
 }

@@ -41,17 +41,14 @@ namespace Cacti.Utils.UnitTests
             (IJob job, IObservable<int> observable) = JobObservable.Get(() => index++);
 
             List<string> readValues = new List<string>();
-            bool completed = false;
 
-            using (observable.Subscribe(new Observer<int>(value => readValues.Add($"read {value}"), exception => { }, () => completed = true)))
-            using (job)
+            using (observable.Subscribe(new Observer<int>(value => readValues.Add($"read {value}"))))
             {
                 await job.Repeat(TimeSpan.FromMilliseconds(200))
                     .Handle<TaskCanceledException>()
                     .Execute(tokenSource.Token);   
             }
 
-            Assert.IsTrue(completed);
             Assert.IsTrue(readValues.Count >= 5);
         }
     }
