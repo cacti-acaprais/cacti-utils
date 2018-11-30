@@ -39,7 +39,7 @@ namespace Cacti.Utils.AsyncUtil
 
             public async Task<bool> MoveNextAsync(CancellationToken token)
             {
-                if(await IsValueAt(position, token))
+                if(!token.IsCancellationRequested && await IsValueAt(position, token))
                 {
                     T value = await GetValueAt(position, token);
                     GetCurrent = getCurrentValue(value);

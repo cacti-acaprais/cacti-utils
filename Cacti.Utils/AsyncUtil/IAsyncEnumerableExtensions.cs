@@ -9,6 +9,32 @@ namespace Cacti.Utils.AsyncUtil
 {
     public static class IAsyncEnumerableExtensions
     {
+        public static IAsyncEnumerable<T> Catch<T, TException>(this IAsyncEnumerable<T> asyncEnumerable, Action<TException> handler)
+            where TException : Exception
+        {
+            return new CompositeAsyncEnumerable<T, T>(asyncEnumerable, value => value, async (token, next) =>
+            {
+                Func<Task<bool>> moveNext = null;
+
+                moveNext = async () =>
+                {
+                    bool hasNext = false;
+                    try
+                    {
+                        hasNext = await next();
+                    }
+                    catch (TException exception)
+                    {
+                        handler(exception);
+                        return await moveNext();
+                    }
+                    return hasNext;
+                };
+
+                return await moveNext();
+            });
+        }
+
         public static async Task<List<T>> ToListAsync<T>(this IAsyncEnumerable<T> asyncEnumerable, CancellationToken token)
         {
             List<T> list = new List<T>();
@@ -53,11 +79,12 @@ namespace Cacti.Utils.AsyncUtil
             if (asyncEnumerable == null) throw new ArgumentNullException(nameof(asyncEnumerable));
             if (func == null) throw new ArgumentNullException(nameof(func));
 
-            IAsyncEnumerator<T> asyncEnumerator = asyncEnumerable.GetAsyncEnumerator();
-
-            while (await asyncEnumerator.MoveNextAsync(token))
+            using (IAsyncEnumerator<T> asyncEnumerator = asyncEnumerable.GetAsyncEnumerator())
             {
-                await func(asyncEnumerator.Current, token);
+                while (await asyncEnumerator.MoveNextAsync(token))
+                {
+                    await func(asyncEnumerator.Current, token);
+                }
             }
         }
     }

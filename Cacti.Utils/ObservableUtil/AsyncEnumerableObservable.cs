@@ -18,10 +18,10 @@ namespace Cacti.Utils.ObservableUtil
 
         public IDisposable Subscribe(IObserver<T> observer)
         {
-            CancellationTokenSource tokenSource = new CancellationTokenSource();
-            
+            CancellationTokenDisposable tokenDisposable = new CancellationTokenDisposable();
+
             enumerable
-                .ForEach((value) => observer.OnNext(value), tokenSource.Token)
+                .ForEach((value) => observer.OnNext(value), tokenDisposable.Token)
                 .ContinueWith((task) =>
                 {
                     if(task.IsFaulted)
@@ -29,24 +29,9 @@ namespace Cacti.Utils.ObservableUtil
                         observer.OnError(task.Exception);
                     }
                     observer.OnCompleted();
-                }, tokenSource.Token);
+                }, tokenDisposable.Token);
             
-            return new Unsubscriber(tokenSource);
-        }
-
-        private class Unsubscriber : IDisposable
-        {
-            private readonly CancellationTokenSource tokenSource;
-
-            public Unsubscriber(CancellationTokenSource tokenSource)
-            {
-                this.tokenSource = tokenSource ?? throw new ArgumentNullException(nameof(tokenSource));
-            }
-
-            public void Dispose()
-            {
-                tokenSource.Cancel();
-            }
+            return tokenDisposable;
         }
     }
 }
