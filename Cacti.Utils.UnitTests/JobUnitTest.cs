@@ -64,7 +64,7 @@ namespace Cacti.Utils.UnitTests
                 .Repeat(TimeSpan.FromMilliseconds(10));
 
             CancellationTokenSource tokenSource = new CancellationTokenSource();
-            tokenSource.CancelAfter(TimeSpan.FromMilliseconds(55));
+            tokenSource.CancelAfter(TimeSpan.FromMilliseconds(50));
 
             try
             {
@@ -73,7 +73,7 @@ namespace Cacti.Utils.UnitTests
             catch(TaskCanceledException)
             { }
             
-            Assert.AreEqual(repeatTimes, 5);
+            Assert.IsTrue(repeatTimes <= 5);
         }
 
         [TestMethod]

@@ -31,28 +31,5 @@ namespace Cacti.Utils.UnitTests
             
             Assert.IsTrue(values.All(value => readValues.Contains(value)));
         }
-
-        [TestMethod]
-        public async Task JobObservableTest()
-        {
-            int index = 0;
-            CancellationTokenSource tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(1));
-
-            (IJob job, IObservable<int> observable) = JobObservable.Get(() => index++);
-
-            List<string> readValues = new List<string>();
-            bool completed = false;
-
-            using (observable.Subscribe(new Observer<int>(value => readValues.Add($"read {value}"), exception => { }, () => completed = true)))
-            using (job)
-            {
-                await job.Repeat(TimeSpan.FromMilliseconds(200))
-                    .Handle<TaskCanceledException>()
-                    .Execute(tokenSource.Token);   
-            }
-
-            Assert.IsTrue(completed);
-            Assert.IsTrue(readValues.Count >= 5);
-        }
     }
 }
