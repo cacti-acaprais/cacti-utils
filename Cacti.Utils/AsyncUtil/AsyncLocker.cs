@@ -10,9 +10,9 @@ namespace Cacti.Utils.AsyncUtil
     {
         private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(initialCount: 1);
 
-        public async Task<IDisposable> LockAsync()
+        public async Task<IDisposable> LockAsync(CancellationToken token)
         {
-            await _semaphoreSlim.WaitAsync();
+            await _semaphoreSlim.WaitAsync(token);
 
             return new Releaser(() => _semaphoreSlim.Release());
         }
