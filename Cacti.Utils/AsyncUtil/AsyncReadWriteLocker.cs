@@ -12,18 +12,20 @@ namespace Cacti.Utils.AsyncUtil
     public class AsyncReadWriteLocker
     {
         private readonly AsyncLocker _asyncLocker = new AsyncLocker();
-        private readonly Queue<Task> _readingTasks = new Queue<Task>();
+        private readonly List<Task> _readingTasks = new List<Task>();
 
         /// <summary>
         /// Add a reading lock. Wait for writing operation to complete.
         /// </summary>
         /// <returns>Disposable reading lock which will be released on dispose.</returns>
-        public async Task<IDisposable> ReadLockAsync()
+        public async Task<IDisposable> ReadLockAsync(CancellationToken token)
         {
-            using (await _asyncLocker.LockAsync())
+            using (await _asyncLocker.LockAsync(token))
             {
+                _readingTasks.RemoveAll(x => x.IsCompleted);
+                
                 var taskCompletionSource = new TaskCompletionSource<object>();
-                _readingTasks.Enqueue(taskCompletionSource.Task);
+                _readingTasks.Add(taskCompletionSource.Task);
 
                 return new ReadingReleaser(() => taskCompletionSource.SetResult(null));
             }
@@ -33,9 +35,9 @@ namespace Cacti.Utils.AsyncUtil
         /// Add a writing lock. Wait for writing and reading operations to complete.
         /// </summary>
         /// <returns>Disposable writing lock which will be released on dispose.</returns>
-        public async Task<IDisposable> WriteLockAsync()
+        public async Task<IDisposable> WriteLockAsync(CancellationToken token)
         {
-            IDisposable releaser = await _asyncLocker.LockAsync();
+            IDisposable releaser = await _asyncLocker.LockAsync(token);
 
             await Task.WhenAll(_readingTasks);
             _readingTasks.Clear();
